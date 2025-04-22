@@ -68,19 +68,25 @@ if st.button("Predict Credit Score"):
                                 interest_rate, delayed_payments]])
 
         # Make prediction
-        prediction = model.predict(input_data)
-        pred_proba = model.predict_proba(input_data)[0]
+prediction = model.predict(input_data)
+pred_proba = model.predict_proba(input_data)[0]
 
-        decoded = {
-            0: ("Poor", "red", "High Risk - Immediate action needed"),
-            1: ("Standard", "orange", "Moderate Risk - Room for improvement"),
-            2: ("Good", "blue", "Low Risk - Maintain current standing"),
-            3: ("Very Good", "green", "Very Low Risk - Excellent standing"),
-            4: ("Excellent", "purple", "Minimal Risk - Outstanding performance")
-        }
+# If model returns string labels
+decoded = {
+    "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
+    "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
+    "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
+    "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
+    "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
+}
 
-        score_value = int(prediction[0])
-        score_label, color, description = decoded.get(score_value, ("Unknown", "gray", "Unable to determine"))
+score_key = prediction[0]
+score_label, color, description = decoded.get(score_key, ("Unknown", "gray", "Unable to determine"))
+
+# Optional progress based on score rank
+score_rank = list(decoded.keys()).index(score_key) if score_key in decoded else 0
+progress = (score_rank + 1) / 5
+
 
         # Display results
         col1, col2 = st.columns(2)
