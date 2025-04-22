@@ -47,12 +47,12 @@ if st.button("Predict Credit Score"):
                                     credit_mix_encoded, outstanding_debt,
                                     interest_rate, delayed_payments]])
 
-            # Make prediction
-            prediction = model.predict(input_data)
-            pred_proba = model.predict_proba(input_data)[0]
+# Make prediction
+prediction = model.predict(input_data)
+ pred_proba = model.predict_proba(input_data)[0]
 
-            # Define decoding map
-            decoded = {
+ # Define decoding map
+    decoded = {
                 "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
                 "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
                 "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
@@ -60,7 +60,7 @@ if st.button("Predict Credit Score"):
                 "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
             }
 
-            # Decode prediction and compute score rank
+ # Decode prediction and compute score rank
             score_key = prediction[0]
             if score_key not in decoded:
                 st.error(f"Unexpected prediction result: {score_key}")
@@ -70,8 +70,8 @@ if st.button("Predict Credit Score"):
             score_rank = list(decoded.keys()).index(score_key)
             progress = (score_rank + 1) / len(decoded)
 
-            # Display results
-            col1, col2 = st.columns(2)
+ # Display results
+     col1, col2 = st.columns(2)
             with col1:
                 st.markdown(f"### Credit Score: **{score_label}**")
                 st.progress(progress)
@@ -79,7 +79,7 @@ if st.button("Predict Credit Score"):
                 st.markdown("### Risk Assessment")
                 st.markdown(f"**Status**: _{description}_")
 
-            # Confidence levels
+  # Confidence levels
             st.markdown("### Confidence Levels")
             chart_data = {list(decoded.keys())[i]: prob for i, prob in enumerate(pred_proba)}
             st.bar_chart(chart_data)
