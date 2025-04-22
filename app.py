@@ -45,18 +45,18 @@ st.title("📈CrediWise💳")
 st.markdown("### _Empowering Financial Decisions with AI_")
 
 # Input fields
-age = st.number_input("Age", min_value=18, max_value=100, value=None)
-income = st.number_input("Monthly Income (₹)", min_value=0, value=None)
-loan_amount = st.number_input("Loan Amount (₹)", min_value=0, value=None)
-num_of_loans = st.slider("Number of Active Loans", 0, 10, value=None)
+age = st.number_input("Age", min_value=18, max_value=100, value=18)
+income = st.number_input("Monthly Income (₹)", min_value=0, value=0)
+loan_amount = st.number_input("Loan Amount (₹)", min_value=0, value=0)
+num_of_loans = st.slider("Number of Active Loans", 0, 10, value=0)
 credit_mix = st.selectbox("Credit Mix", ["Select", "Standard", "Good", "Bad"])
-outstanding_debt = st.number_input("Outstanding Debt (₹)", min_value=0, value=None)
-interest_rate = st.slider("Interest Rate (%)", 0, 100, value=None)
-delayed_payments = st.slider("Number of Delayed Payments", 0, 50, value=None)
+outstanding_debt = st.number_input("Outstanding Debt (₹)", min_value=0, value=0)
+interest_rate = st.slider("Interest Rate (%)", 0, 100, value=5)
+delayed_payments = st.slider("Number of Delayed Payments", 0, 50, value=0)
 
 # Ensure all fields are entered
 if st.button("Predict Credit Score"):
-    if None in [age, income, loan_amount, outstanding_debt, num_of_loans, interest_rate, delayed_payments] or credit_mix == "Select":
+    if credit_mix == "Select":
         st.warning("⚠️ Please fill out all fields to generate a prediction.")
     else:
         # All prediction-related code is indented under this else block
@@ -79,25 +79,24 @@ if st.button("Predict Credit Score"):
         score_key = prediction[0]
         score_label, color, description = decoded.get(score_key, ("Unknown", "gray", "Unable to determine"))
         score_rank = list(decoded.keys()).index(score_key) if score_key in decoded else 0
-        progress = (score_rank + 1) / 5
+        progress = (score_rank + 1) / len(decoded)
 
         # Properly indented columns
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"### Credit Score: **{score_label}**")
-            st.progress(progress, text=f"Score: {score_rank + 1}/5")
+            st.progress(progress)
         with col2:
             st.markdown("### Risk Assessment")
             st.markdown(f"**Status**: _{description}_")
 
         # Confidence levels
         st.markdown("### Confidence Levels")
-        for i, prob in enumerate(pred_proba):
-            score_name = list(decoded.keys())[i]
-            st.bar_chart({score_name: prob})
+        chart_data = {list(decoded.keys())[i]: prob for i, prob in enumerate(pred_proba)}
+        st.bar_chart(chart_data)
 
         # Recommendations
         st.info("💡 **Recommendations**:\n" +
                 "- Keep credit utilization below 30%\n" +
                 "- Make payments on time\n" +
-                "- Maintain a diverse credit mix") check for any error
+                "- Maintain a diverse credit mix")
