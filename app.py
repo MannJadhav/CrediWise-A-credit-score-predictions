@@ -59,41 +59,33 @@ if st.button("Predict Credit Score"):
     if None in [age, income, loan_amount, outstanding_debt, num_of_loans, interest_rate, delayed_payments] or credit_mix == "Select":
         st.warning("⚠️ Please fill out all fields to generate a prediction.")
     else:
-        # Encode categorical variable
+        # All of this should be indented under the else
         credit_mix_encoded = {"Bad": 0, "Standard": 1, "Good": 2}[credit_mix]
-
-        # Prepare input data
         input_data = np.array([[age, income, loan_amount, num_of_loans,
                                 credit_mix_encoded, outstanding_debt,
                                 interest_rate, delayed_payments]])
 
-        # Make prediction
-prediction = model.predict(input_data)
-pred_proba = model.predict_proba(input_data)[0]
+        prediction = model.predict(input_data)
+        pred_proba = model.predict_proba(input_data)[0]
 
-# If model returns string labels
-decoded = {
-    "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
-    "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
-    "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
-    "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
-    "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
-}
+        decoded = {
+            "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
+            "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
+            "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
+            "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
+            "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
+        }
 
-score_key = prediction[0]
-score_label, color, description = decoded.get(score_key, ("Unknown", "gray", "Unable to determine"))
+        score_key = prediction[0]
+        score_label, color, description = decoded.get(score_key, ("Unknown", "gray", "Unable to determine"))
+        score_rank = list(decoded.keys()).index(score_key) if score_key in decoded else 0
+        progress = (score_rank + 1) / 5
 
-# Optional progress based on score rank
-score_rank = list(decoded.keys()).index(score_key) if score_key in decoded else 0
-progress = (score_rank + 1) / 5
-
-
-        # Display results
+        # 👇 THIS LINE MUST BE INSIDE THE else BLOCK
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"### Credit Score: **{score_label}**")
-            progress = (score_value + 1) / 5
-            st.progress(progress, text=f"Score: {score_value + 1}/5")
+            st.progress(progress, text=f"Score: {score_rank + 1}/5")
         with col2:
             st.markdown("### Risk Assessment")
             st.markdown(f"**Status**: _{description}_")
