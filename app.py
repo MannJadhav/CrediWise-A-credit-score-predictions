@@ -37,83 +37,67 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Load the model and validate it
-try:
-    model = joblib.load(model_file)
-    st.success("Model loaded successfully.")
-except Exception as e:
-    st.error(f"Error loading model: {e}")
-    st.stop()
+# Load the model
+model = joblib.load(model_file)
 
 # Title and Slogan
 st.title("📈CrediWise💳")
 st.markdown("### _Empowering Financial Decisions with AI_")
 
 # Input fields
-age = st.number_input("Age", min_value=18, max_value=100, value=18)
-income = st.number_input("Monthly Income (₹)", min_value=0, value=0)
-loan_amount = st.number_input("Loan Amount (₹)", min_value=0, value=0)
-num_of_loans = st.slider("Number of Active Loans", 0, 10, value=0)
+age = st.number_input("Age", min_value=18, max_value=100, value=None)
+income = st.number_input("Monthly Income (₹)", min_value=0, value=None)
+loan_amount = st.number_input("Loan Amount (₹)", min_value=0, value=None)
+num_of_loans = st.slider("Number of Active Loans", 0, 10, value=None)
 credit_mix = st.selectbox("Credit Mix", ["Select", "Standard", "Good", "Bad"])
-outstanding_debt = st.number_input("Outstanding Debt (₹)", min_value=0, value=0)
-interest_rate = st.slider("Interest Rate (%)", 0, 100, value=5)
-delayed_payments = st.slider("Number of Delayed Payments", 0, 50, value=0)
+outstanding_debt = st.number_input("Outstanding Debt (₹)", min_value=0, value=None)
+interest_rate = st.slider("Interest Rate (%)", 0, 100, value=None)
+delayed_payments = st.slider("Number of Delayed Payments", 0, 50, value=None)
 
 # Ensure all fields are entered
 if st.button("Predict Credit Score"):
-    if credit_mix == "Select":
+    if None in [age, income, loan_amount, outstanding_debt, num_of_loans, interest_rate, delayed_payments] or credit_mix == "Select":
         st.warning("⚠️ Please fill out all fields to generate a prediction.")
     else:
-        try:
-            # Encode input
-            credit_mix_encoded = {"Bad": 0, "Standard": 1, "Good": 2}[credit_mix]
-            input_data = np.array([[age, income, loan_amount, num_of_loans,
-                                    credit_mix_encoded, outstanding_debt,
-                                    interest_rate, delayed_payments]])
+        # All prediction-related code is indented under this else block
+        credit_mix_encoded = {"Bad": 0, "Standard": 1, "Good": 2}[credit_mix]
+        input_data = np.array([[age, income, loan_amount, num_of_loans,
+                                credit_mix_encoded, outstanding_debt,
+                                interest_rate, delayed_payments]])
 
-            # Debugging inputs
-            st.text(f"Input Data: {input_data}")
+        prediction = model.predict(input_data)
+        pred_proba = model.predict_proba(input_data)[0]
 
-            # Make prediction
-            prediction = model.predict(input_data)
-            pred_proba = model.predict_proba(input_data)[0]
+        decoded = {
+            "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
+            "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
+            "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
+            "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
+            "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
+        }
 
-            # Decode prediction
-            decoded = {
-                "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
-                "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
-                "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
-                "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
-                "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
-            }
+        score_key = prediction[0]
+        score_label, color, description = decoded.get(score_key, ("Unknown", "gray", "Unable to determine"))
+        score_rank = list(decoded.keys()).index(score_key) if score_key in decoded else 0
+        progress = (score_rank + 1) / 5
 
-            score_key = prediction[0]
-            if score_key not in decoded:
-                st.error(f"Unexpected prediction result: {score_key}")
-                st.stop()
+        # Properly indented columns
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"### Credit Score: **{score_label}**")
+            st.progress(progress, text=f"Score: {score_rank + 1}/5")
+        with col2:
+            st.markdown("### Risk Assessment")
+            st.markdown(f"**Status**: _{description}_")
 
-            score_label, color, description = decoded[score_key]
-            score_rank = list(decoded.keys()).index(score_key)
-            progress = (score_rank + 1) / len(decoded)
+        # Confidence levels
+        st.markdown("### Confidence Levels")
+        for i, prob in enumerate(pred_proba):
+            score_name = list(decoded.keys())[i]
+            st.bar_chart({score_name: prob})
 
-            # Display results in columns
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(f"### Credit Score: **{score_label}**")
-                st.progress(progress)
-            with col2:
-                st.markdown("### Risk Assessment")
-                st.markdown(f"**Status**: _{description}_")
-
-            # Confidence levels
-            st.markdown("### Confidence Levels")
-            chart_data = {list(decoded.keys())[i]: prob for i, prob in enumerate(pred_proba)}
-            st.bar_chart(chart_data)
-
-            # Recommendations
-            st.info("💡 **Recommendations**:\n" +
-                    "- Keep credit utilization below 30%\n" +
-                    "- Make payments on time\n" +
-                    "- Maintain a diverse credit mix")
-        except Exception as e:
-            st.error(f"Error during prediction: {e}")
+        # Recommendations
+        st.info("💡 **Recommendations**:\n" +
+                "- Keep credit utilization below 30%\n" +
+                "- Make payments on time\n" +
+                "- Maintain a diverse credit mix")
