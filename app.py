@@ -59,7 +59,7 @@ if st.button("Predict Credit Score"):
     if None in [age, income, loan_amount, outstanding_debt, num_of_loans, interest_rate, delayed_payments] or credit_mix == "Select":
         st.warning("⚠️ Please fill out all fields to generate a prediction.")
     else:
-        # All of this should be indented under the else
+        # All prediction-related code is indented under this else block
         credit_mix_encoded = {"Bad": 0, "Standard": 1, "Good": 2}[credit_mix]
         input_data = np.array([[age, income, loan_amount, num_of_loans,
                                 credit_mix_encoded, outstanding_debt,
@@ -81,7 +81,7 @@ if st.button("Predict Credit Score"):
         score_rank = list(decoded.keys()).index(score_key) if score_key in decoded else 0
         progress = (score_rank + 1) / 5
 
-        # 👇 THIS LINE MUST BE INSIDE THE else BLOCK
+        # Properly indented columns
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"### Credit Score: **{score_label}**")
@@ -93,7 +93,7 @@ if st.button("Predict Credit Score"):
         # Confidence levels
         st.markdown("### Confidence Levels")
         for i, prob in enumerate(pred_proba):
-            score_name = decoded.get(i, ("Unknown", "gray", ""))[0]
+            score_name = list(decoded.keys())[i]
             st.bar_chart({score_name: prob})
 
         # Recommendations
