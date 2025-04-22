@@ -37,8 +37,13 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Load the model
-model = joblib.load(model_file)
+# Load the model and validate it
+try:
+    model = joblib.load(model_file)
+    st.success("Model loaded successfully.")
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    st.stop()
 
 # Title and Slogan
 st.title("📈CrediWise💳")
@@ -59,44 +64,57 @@ if st.button("Predict Credit Score"):
     if credit_mix == "Select":
         st.warning("⚠️ Please fill out all fields to generate a prediction.")
     else:
-        # All prediction-related code is indented under this else block
-        credit_mix_encoded = {"Bad": 0, "Standard": 1, "Good": 2}[credit_mix]
-        input_data = np.array([[age, income, loan_amount, num_of_loans,
-                                credit_mix_encoded, outstanding_debt,
-                                interest_rate, delayed_payments]])
+        try:
+            # Encode input and validate
+            credit_mix_encoded = {"Bad": 0, "Standard": 1, "Good": 2}[credit_mix]
+            input_data = np.array([[age, income, loan_amount, num_of_loans,
+                                    credit_mix_encoded, outstanding_debt,
+                                    interest_rate, delayed_payments]])
 
-        prediction = model.predict(input_data)
-        pred_proba = model.predict_proba(input_data)[0]
+            # Debugging inputs
+            st.text(f"Input Data: {input_data}")
 
-        decoded = {
-            "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
-            "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
-            "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
-            "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
-            "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
-        }
+            # Make prediction
+            prediction = model.predict(input_data)
+            pred_proba = model.predict_proba(input_data)[0]
 
-        score_key = prediction[0]
-        score_label, color, description = decoded.get(score_key, ("Unknown", "gray", "Unable to determine"))
-        score_rank = list(decoded.keys()).index(score_key) if score_key in decoded else 0
-        progress = (score_rank + 1) / len(decoded)
+            # Define decoding map
+            decoded = {
+                "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
+                "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
+                "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
+                "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
+                "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
+            }
 
-        # Properly indented columns
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown(f"### Credit Score: **{score_label}**")
-            st.progress(progress)
-        with col2:
-            st.markdown("### Risk Assessment")
-            st.markdown(f"**Status**: _{description}_")
+            # Decode prediction and compute score rank
+            score_key = prediction[0]
+            if score_key not in decoded:
+                st.error(f"Unexpected prediction result: {score_key}")
+                st.stop()
 
-        # Confidence levels
-        st.markdown("### Confidence Levels")
-        chart_data = {list(decoded.keys())[i]: prob for i, prob in enumerate(pred_proba)}
-        st.bar_chart(chart_data)
+            score_label, color, description = decoded[score_key]
+            score_rank = list(decoded.keys()).index(score_key)
+            progress = (score_rank + 1) / len(decoded)
 
-        # Recommendations
-        st.info("💡 **Recommendations**:\n" +
-                "- Keep credit utilization below 30%\n" +
-                "- Make payments on time\n" +
-                "- Maintain a diverse credit mix")
+            # Display results
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"### Credit Score: **{score_label}**")
+                st.progress(progress)
+            with col2:
+                st.markdown("### Risk Assessment")
+                st.markdown(f"**Status**: _{description}_")
+
+            # Confidence levels
+            st.markdown("### Confidence Levels")
+            chart_data = {list(decoded.keys())[i]: prob for i, prob in enumerate(pred_proba)}
+            st.bar_chart(chart_data)
+
+            # Recommendations
+            st.info("💡 **Recommendations**:\n" +
+                    "- Keep credit utilization below 30%\n" +
+                    "- Make payments on time\n" +
+                    "- Maintain a diverse credit mix")
+        except Exception as e:
+            st.error(f"Error during prediction: {e}")
