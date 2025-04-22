@@ -1,120 +1,26 @@
 import streamlit as st
-import joblib
-import numpy as np
-import os
-import gdown
 
-# Direct download link from Google Drive
-model_url = "https://drive.google.com/uc?id=1eJRjojxktkifRSFT-d0rIlL87P0PkQ1h"
-model_file = "model.pkl"
+# Example structure of your Streamlit application
+def main():
+    st.title("Credit Score Prediction App")
 
-# Download the model if it doesn't exist
-if not os.path.exists(model_file):
-    with st.spinner("Downloading model..."):
-        gdown.download(model_url, model_file, quiet=False)
+    # Input fields and layout
+    st.subheader("Provide your details:")
+    col1, col2 = st.columns(2)  # Consistent 4-space indentation for this line
 
-# Add custom background color
-st.markdown(
-    """
-    <style>
-    body {
-        background: linear-gradient(to right, #141E30, #243B55);
-        color: #FFFFFF;
-    }
-    .css-18e3th9 {
-        background-color: rgba(0,0,0,0) !important;
-    }
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 5px;
-    }
-    .stButton>button:hover {
-        background-color: #45a049;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+    # Inputs in column 1
+    with col1:
+        age = st.number_input("Age", min_value=18, max_value=100, value=25)
+        income = st.number_input("Annual Income", min_value=0, value=50000)
 
-# Load the model and validate it
-try:
-    model = joblib.load(model_file)
-    st.success("Model loaded successfully.")
-except Exception as e:
-    st.error(f"Error loading model: {e}")
-    st.stop()
+    # Inputs in column 2
+    with col2:
+        debt = st.number_input("Debt Amount", min_value=0, value=1000)
+        score = st.slider("Credit Score", min_value=300, max_value=850, value=600)
 
-# Title and Slogan
-st.title("📈CrediWise💳")
-st.markdown("### _Empowering Financial Decisions with AI_")
+    # Prediction button
+    if st.button("Predict"):
+        st.write("Prediction logic goes here.")
 
-# Input fields
-age = st.number_input("Age", min_value=18, max_value=100, value=18)
-income = st.number_input("Monthly Income (₹)", min_value=0, value=0)
-loan_amount = st.number_input("Loan Amount (₹)", min_value=0, value=0)
-num_of_loans = st.slider("Number of Active Loans", 0, 10, value=0)
-credit_mix = st.selectbox("Credit Mix", ["Select", "Standard", "Good", "Bad"])
-outstanding_debt = st.number_input("Outstanding Debt (₹)", min_value=0, value=0)
-interest_rate = st.slider("Interest Rate (%)", 0, 100, value=5)
-delayed_payments = st.slider("Number of Delayed Payments", 0, 50, value=0)
-
-# Ensure all fields are entered
-if st.button("Predict Credit Score"):
-    if credit_mix == "Select":
-        st.warning("⚠️ Please fill out all fields to generate a prediction.")
-    else:
-        try:
-            # Encode input and validate
-            credit_mix_encoded = {"Bad": 0, "Standard": 1, "Good": 2}[credit_mix]
-            input_data = np.array([[age, income, loan_amount, num_of_loans,
-                                    credit_mix_encoded, outstanding_debt,
-                                    interest_rate, delayed_payments]])
-
-            # Debugging inputs
-            st.text(f"Input Data: {input_data}")
-
-            # Make prediction
-            prediction = model.predict(input_data)
-            pred_proba = model.predict_proba(input_data)[0]
-
-            # Define decoding map
-            decoded = {
-                "Poor": ("Poor", "red", "High Risk - Immediate action needed"),
-                "Standard": ("Standard", "orange", "Moderate Risk - Room for improvement"),
-                "Good": ("Good", "blue", "Low Risk - Maintain current standing"),
-                "Very Good": ("Very Good", "green", "Very Low Risk - Excellent standing"),
-                "Excellent": ("Excellent", "purple", "Minimal Risk - Outstanding performance")
-            }
-
-            # Decode prediction and compute score rank
-            score_key = prediction[0]
-            if score_key not in decoded:
-                st.error(f"Unexpected prediction result: {score_key}")
-                st.stop()
-
-            score_label, color, description = decoded[score_key]
-            score_rank = list(decoded.keys()).index(score_key)
-            progress = (score_rank + 1) / len(decoded)
-
-            # Display results
-            col1, col2 = st.columns(2)
-            with col1:
-                st.markdown(f"### Credit Score: **{score_label}**")
-                st.progress(progress)
-            with col2:
-                st.markdown("### Risk Assessment")
-                st.markdown(f"**Status**: _{description}_")
-
-            # Confidence levels
-            st.markdown("### Confidence Levels")
-            chart_data = {list(decoded.keys())[i]: prob for i, prob in enumerate(pred_proba)}
-            st.bar_chart(chart_data)
-
-            # Recommendations
-            st.info("💡 **Recommendations**:\n" +
-                    "- Keep credit utilization below 30%\n" +
-                    "- Make payments on time\n" +
-                    "- Maintain a diverse credit mix")
-        except Exception as e:
-            st.error(f"Error during prediction: {e}")
+if __name__ == "__main__":
+    main()
