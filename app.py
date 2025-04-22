@@ -13,36 +13,12 @@ if not os.path.exists(model_file):
     with st.spinner("Downloading model..."):
         gdown.download(model_url, model_file, quiet=False)
 
-# Add custom background color
-st.markdown(
-    """
-    <style>
-    body {
-        background: linear-gradient(to right, #141E30, #243B55);
-        color: #FFFFFF;
-    }
-    .css-18e3th9 {
-        background-color: rgba(0,0,0,0) !important;
-    }
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border-radius: 5px;
-    }
-    .stButton>button:hover {
-        background-color: #45a049;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Load the model and validate it
+# Silently load the model
+model = None
 try:
     model = joblib.load(model_file)
-    st.success("Model loaded successfully.")
 except Exception as e:
-    st.error(f"Error loading model: {e}")
+    st.error("⚠️ An internal error occurred. Please try again later.")
     st.stop()
 
 # Title and Slogan
@@ -70,9 +46,6 @@ if st.button("Predict Credit Score"):
             input_data = np.array([[age, income, loan_amount, num_of_loans,
                                     credit_mix_encoded, outstanding_debt,
                                     interest_rate, delayed_payments]])
-
-            # Debugging inputs
-            st.text(f"Input Data: {input_data}")
 
             # Make prediction
             prediction = model.predict(input_data)
